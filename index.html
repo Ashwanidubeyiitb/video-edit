@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel — College Memory Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #18181f;
+  --bg4: #22222c;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #f0eee8;
+  --text2: #9b99a3;
+  --text3: #5c5a66;
+  --accent: #c9a96e;
+  --accent2: #e8c88a;
+  --purple: #8b7fd4;
+  --teal: #4ecdc4;
+  --coral: #ff6b6b;
+  --green: #6bcb77;
+  --r: 10px;
+  --r2: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; font-size: 15px; line-height: 1.5; scroll-behavior: smooth; }
+body { min-height: 100vh; overflow-x: hidden; }
+
+/* ── HEADER ── */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); letter-spacing: -0.5px; }
+.logo span { color: var(--text3); font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 300; margin-left: 10px; }
+.tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 10px; padding: 4px; }
+.tab { padding: 7px 18px; border-radius: 8px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.tab.active { background: var(--bg4); color: var(--text); border: 1px solid var(--border2); }
+.tab:hover:not(.active) { color: var(--text); }
+.github-btn { display: flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+.github-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── LAYOUT ── */
+.main { padding: 0; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  margin: 32px 28px 0;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--r2);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: var(--bg2);
+  position: relative;
+  overflow: hidden;
+}
+.drop-zone::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,169,110,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(201,169,110,0.04);
+}
+.drop-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.6; }
+.drop-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+.drop-sub { color: var(--text2); font-size: 13px; }
+.drop-sub b { color: var(--accent); font-weight: 500; }
+input[type=file] { display: none; }
+
+/* ── FILE LIST ── */
+.file-list { margin: 16px 28px 0; display: flex; flex-direction: column; gap: 8px; }
+.file-item {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.file-thumb { width: 60px; height: 40px; object-fit: cover; border-radius: 6px; background: var(--bg3); flex-shrink: 0; }
+.file-thumb-placeholder { width: 60px; height: 40px; border-radius: 6px; background: var(--bg3); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 18px; flex-shrink: 0; }
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.file-status { font-size: 11px; font-weight: 500; }
+.file-status.pending { color: var(--text3); }
+.file-status.processing { color: var(--accent); }
+.file-status.done { color: var(--green); }
+.file-status.error { color: var(--coral); }
+.file-remove { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+.file-remove:hover { background: rgba(255,107,107,0.1); color: var(--coral); }
+
+/* ── TWO COL LAYOUT ── */
+.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 0; margin: 24px 28px 0; align-items: start; }
+@media(max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── PREVIEW ── */
+.preview-panel { }
+.preview-wrap {
+  background: #000; border-radius: var(--r2); overflow: hidden;
+  aspect-ratio: 16/9; position: relative;
+  border: 1px solid var(--border);
+}
+.preview-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview-empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; color: var(--text3);
+}
+.preview-empty .big { font-size: 40px; }
+.preview-empty p { font-size: 13px; }
+#vignette-overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.95) 100%);
+  opacity: 0; transition: opacity 0.3s;
+}
+#grain-canvas {
+  position: absolute; inset: 0; pointer-events: none;
+  opacity: 0; mix-blend-mode: overlay; border-radius: var(--r2);
+}
+.preview-label {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px; margin-bottom: 16px;
+}
+.preview-label-left { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── PRESETS ── */
+.presets-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+@media(max-width:900px) { .presets-row { grid-template-columns: repeat(4, 1fr); } }
+@media(max-width:500px) { .presets-row { grid-template-columns: repeat(2, 1fr); } }
+.preset-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 10px 8px; cursor: pointer; transition: all 0.2s; text-align: left;
+}
+.preset-card:hover { border-color: var(--border2); background: var(--bg4); }
+.preset-card.active { border-color: var(--accent); background: rgba(201,169,110,0.08); }
+.preset-card .pname { font-size: 12px; font-weight: 500; display: block; }
+.preset-card .pvibe { font-size: 10px; color: var(--text3); display: block; margin-top: 2px; }
+.preset-card.active .pname { color: var(--accent2); }
+
+/* ── CONTROLS PANEL ── */
+.controls-panel {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r2); padding: 20px;
+  position: sticky; top: 80px;
+  margin-left: 20px;
+}
+@media(max-width:900px) { .controls-panel { margin-left: 0; margin-top: 16px; position: relative; top: 0; } }
+.controls-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+
+.slider-group { margin-bottom: 14px; }
+.slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.slider-name { font-size: 12px; color: var(--text2); }
+.slider-val { font-size: 12px; font-weight: 500; color: var(--accent); font-family: 'DM Mono', monospace; min-width: 42px; text-align: right; }
+
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 3px;
+  background: var(--bg4); border-radius: 99px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); cursor: pointer; transition: transform 0.15s;
+  box-shadow: 0 0 0 3px rgba(201,169,110,0.2);
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.section-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 8px; margin-top: 14px; }
+.btn { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border2); background: transparent; color: var(--text); font-size: 13px; font-family: 'Outfit', sans-serif; font-weight: 500; cursor: pointer; transition: all 0.2s; text-align: center; }
+.btn:hover { background: var(--bg4); }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: #0a0a0f; }
+.btn.accent:hover { background: var(--accent2); }
+.btn.danger { border-color: rgba(255,107,107,0.3); color: var(--coral); }
+.btn.danger:hover { background: rgba(255,107,107,0.08); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── PROCESS QUEUE ── */
+.queue-panel { margin: 20px 28px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; }
+.queue-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.queue-title { font-size: 14px; font-weight: 500; }
+.queue-stats { font-size: 12px; color: var(--text2); }
+.progress-bar-wrap { height: 3px; background: var(--bg3); }
+.progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; border-radius: 99px; }
+.queue-items { padding: 12px 20px; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+.queue-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); }
+.qi-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.qi-icon.pending { background: var(--bg4); }
+.qi-icon.proc { background: rgba(201,169,110,0.15); }
+.qi-icon.done { background: rgba(107,203,119,0.15); }
+.qi-icon.err { background: rgba(255,107,107,0.12); }
+.qi-info { flex: 1; min-width: 0; }
+.qi-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qi-detail { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.qi-dl { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--green); font-size: 11px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.qi-dl:hover { background: rgba(107,203,119,0.1); }
+
+/* ── COMPRESS SECTION ── */
+.compress-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 28px; }
+@media(max-width:700px) { .compress-grid { grid-template-columns: 1fr; } }
+.compress-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 24px; }
+.compress-card h3 { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+.compress-card p { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.option-group { margin-bottom: 16px; }
+.option-label { font-size: 12px; color: var(--text2); margin-bottom: 8px; display: block; }
+.option-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { padding: 6px 14px; border-radius: 99px; border: 1px solid var(--border2); background: transparent; color: var(--text2); font-size: 12px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; }
+.pill:hover { border-color: var(--border2); color: var(--text); }
+.pill.active { border-color: var(--accent); background: rgba(201,169,110,0.1); color: var(--accent); }
+
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--bg3); border-radius: 8px; padding: 12px; text-align: center; }
+.stat-num { font-size: 20px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; }
+.stat-label { font-size: 10px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── INFO BOX ── */
+.info-box { background: var(--bg3); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 16px; margin: 0 28px 20px; font-size: 13px; color: var(--text2); }
+.info-box b { color: var(--accent2); font-weight: 500; }
+
+/* ── COLAB SECTION ── */
+.colab-section { margin: 24px 28px; }
+.colab-title { font-family: 'DM Serif Display', serif; font-size: 24px; margin-bottom: 8px; }
+.colab-sub { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+.colab-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media(max-width:700px) { .colab-cards { grid-template-columns: 1fr; } }
+.colab-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 24px; }
+.colab-card h3 { font-size: 15px; font-weight: 500; margin-bottom: 8px; }
+.colab-card p { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+.tag { display: inline-block; font-size: 10px; padding: 3px 9px; border-radius: 99px; font-weight: 500; margin-bottom: 10px; }
+.tag.filters { background: rgba(139,127,212,0.15); color: var(--purple); border: 1px solid rgba(139,127,212,0.3); }
+.tag.compress { background: rgba(78,205,196,0.12); color: var(--teal); border: 1px solid rgba(78,205,196,0.25); }
+.code-block { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); line-height: 1.8; overflow-x: auto; margin-bottom: 12px; }
+.code-block .cmd { color: var(--accent); }
+.code-block .comment { color: var(--text3); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 99px; }
+
+/* ── RESPONSIVE HEADER ── */
+@media(max-width:640px) {
+  .header { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+  .tabs { order: 3; width: 100%; justify-content: center; }
+  .github-btn span { display: none; }
+  .two-col { margin: 16px 16px 0; }
+  .drop-zone { margin: 20px 16px 0; }
+  .file-list { margin: 12px 16px 0; }
+  .compress-grid { margin: 16px 16px; }
+  .queue-panel { margin: 16px 16px; }
+  .colab-section { margin: 16px 16px; }
+  .info-box { margin: 0 16px 16px; }
+}
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg4); border: 1px solid var(--border2); border-radius: 99px; padding: 10px 20px; font-size: 13px; z-index: 9999; transition: transform 0.3s; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { border-color: rgba(107,203,119,0.4); color: var(--green); }
+.toast.error { border-color: rgba(255,107,107,0.4); color: var(--coral); }
+
+/* ── SPINNER ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--bg4); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Reel <span>college memory studio</span></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('filters')">Filters</button>
+    <button class="tab" onclick="switchTab('compress')">Compress</button>
+    <button class="tab" onclick="switchTab('colab')">Colab</button>
+  </div>
+  <a class="github-btn" href="https://github.com" target="_blank">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+    <span>Deploy to GitHub</span>
+  </a>
+</div>
+
+<!-- ══ FILTERS TAB ══ -->
+<div id="tab-filters" class="section main active">
+  
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="filter-drop" onclick="document.getElementById('filter-file-input').click()">
+    <input type="file" id="filter-file-input" accept="video/*" multiple>
+    <div class="drop-icon">🎬</div>
+    <div class="drop-title">Drop videos here or click to browse</div>
+    <div class="drop-sub">Supports <b>MP4, MOV, AVI, MKV, WebM</b> · Multiple files welcome</div>
+  </div>
+
+  <div class="file-list" id="filter-file-list"></div>
+
+  <div class="two-col" id="filter-workspace" style="display:none">
+    <div class="preview-panel">
+      <!-- Presets -->
+      <div class="presets-row" id="preset-grid"></div>
+
+      <!-- Preview -->
+      <div class="preview-wrap" id="preview-wrap">
+        <video id="preview-video" class="preview-video" autoplay loop muted playsinline></video>
+        <div id="vignette-overlay"></div>
+        <canvas id="grain-canvas"></canvas>
+        <div class="preview-empty" id="preview-empty">
+          <div class="big">▶</div>
+          <p>Select a file above to preview</p>
+        </div>
+      </div>
+
+      <div class="preview-label">
+        <div class="preview-label-left">
+          <div class="live-dot"></div>
+          Live preview · CSS filters
+        </div>
+        <div style="font-size:12px;color:var(--text3)" id="preview-file-name">No file selected</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-panel">
+      <div class="controls-title">Adjust</div>
+
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Brightness</span><span class="slider-val" id="v-brightness">100%</span></div>
+        <input type="range" id="s-brightness" min="50" max="200" value="100" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Contrast</span><span class="slider-val" id="v-contrast">100%</span></div>
+        <input type="range" id="s-contrast" min="50" max="200" value="100" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Saturation</span><span class="slider-val" id="v-saturation">100%</span></div>
+        <input type="range" id="s-saturation" min="0" max="250" value="100" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Warmth</span><span class="slider-val" id="v-sepia">0%</span></div>
+        <input type="range" id="s-sepia" min="0" max="100" value="0" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Dreamy blur</span><span class="slider-val" id="v-blur">0px</span></div>
+        <input type="range" id="s-blur" min="0" max="8" value="0" step="0.1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Vignette</span><span class="slider-val" id="v-vignette">0%</span></div>
+        <input type="range" id="s-vignette" min="0" max="100" value="0" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Hue shift</span><span class="slider-val" id="v-hue">0°</span></div>
+        <input type="range" id="s-hue" min="-180" max="180" value="0" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Film grain</span><span class="slider-val" id="v-grain">0%</span></div>
+        <input type="range" id="s-grain" min="0" max="100" value="0" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Fade (blacks)</span><span class="slider-val" id="v-fade">0%</span></div>
+        <input type="range" id="s-fade" min="0" max="60" value="0" step="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header"><span class="slider-name">Playback speed</span><span class="slider-val" id="v-speed">1.0×</span></div>
+        <input type="range" id="s-speed" min="25" max="200" value="100" step="5">
+      </div>
+
+      <div class="section-divider"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="resetFilters()">Reset</button>
+        <button class="btn accent" onclick="generateAndDownload()">Get FFmpeg command</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="applyToAll()" id="apply-all-btn" style="display:none">Apply to all files →</button>
+      </div>
+
+      <div id="ffmpeg-output" style="display:none;margin-top:14px">
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:'DM Mono',monospace">FFmpeg command</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;word-break:break-all" id="ffmpeg-text"></div>
+          <button onclick="copyFFmpeg()" style="margin-top:10px;font-size:11px;color:var(--accent);border:none;background:none;cursor:pointer;font-family:'Outfit',sans-serif;padding:0">Copy command</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ COMPRESS TAB ══ -->
+<div id="tab-compress" class="section main">
+
+  <div class="drop-zone" id="compress-drop" style="margin-top:32px" onclick="document.getElementById('compress-file-input').click()">
+    <input type="file" id="compress-file-input" accept="video/*" multiple>
+    <div class="drop-icon">📦</div>
+    <div class="drop-title">Drop videos to compress</div>
+    <div class="drop-sub">Upload <b>multiple videos</b> — all compressed with same settings</div>
+  </div>
+
+  <div class="file-list" id="compress-file-list"></div>
+
+  <div class="compress-grid">
+    <div class="compress-card">
+      <h3>Compression settings</h3>
+      <p>Tune quality vs file size. These generate the FFmpeg command — run it in Colab to process.</p>
+
+      <div class="option-group">
+        <span class="option-label">Quality preset</span>
+        <div class="option-pills">
+          <button class="pill" onclick="setQuality(this,'18')" data-q="18">Lossless</button>
+          <button class="pill active" onclick="setQuality(this,'23')" data-q="23">High</button>
+          <button class="pill" onclick="setQuality(this,'28')" data-q="28">Balanced</button>
+          <button class="pill" onclick="setQuality(this,'35')" data-q="35">Small</button>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-label">Codec</span>
+        <div class="option-pills">
+          <button class="pill active" onclick="setCodec(this,'libx265')" data-c="libx265">H.265 — best compression</button>
+          <button class="pill" onclick="setCodec(this,'libx264')" data-c="libx264">H.264 — compatible</button>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-label">Resolution</span>
+        <div class="option-pills">
+          <button class="pill active" onclick="setRes(this,'')" data-r="">Keep original</button>
+          <button class="pill" onclick="setRes(this,'1920:1080')" data-r="1920:1080">1080p</button>
+          <button class="pill" onclick="setRes(this,'1280:720')" data-r="1280:720">720p</button>
+          <button class="pill" onclick="setRes(this,'854:480')" data-r="854:480">480p</button>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-label">Speed (encoding)</span>
+        <div class="option-pills">
+          <button class="pill" onclick="setPreset(this,'ultrafast')">Ultra fast</button>
+          <button class="pill" onclick="setPreset(this,'fast')">Fast</button>
+          <button class="pill active" onclick="setPreset(this,'slow')">Slow (better)</button>
+          <button class="pill" onclick="setPreset(this,'veryslow')">Very slow</button>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-label">Audio</span>
+        <div class="option-pills">
+          <button class="pill active" onclick="setAudio(this,'copy')">Keep original</button>
+          <button class="pill" onclick="setAudio(this,'192k')">AAC 192k</button>
+          <button class="pill" onclick="setAudio(this,'128k')">AAC 128k</button>
+        </div>
+      </div>
+
+      <button class="btn accent" style="width:100%;margin-top:8px" onclick="generateCompressCmd()">Generate Colab commands</button>
+    </div>
+
+    <div class="compress-card">
+      <h3>How it works</h3>
+      <p>This tool generates the FFmpeg commands. Paste them into Google Colab to process your videos — Colab's GPU speeds things up massively.</p>
+      
+      <div class="stats-row" id="compress-stats">
+        <div class="stat-card"><div class="stat-num" id="st-files">0</div><div class="stat-label">Files</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-size">0 MB</div><div class="stat-label">Total size</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-savings">~60%</div><div class="stat-label">Est. savings</div></div>
+      </div>
+
+      <div id="compress-cmd-output" style="display:none">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Commands for Google Colab:</div>
+        <div class="code-block" id="compress-cmd-text" style="max-height:200px;overflow-y:auto"></div>
+        <button onclick="copyCompressCmd()" style="font-size:12px;color:var(--accent);border:none;background:none;cursor:pointer;font-family:'Outfit',sans-serif;padding:4px 0">Copy all commands</button>
+      </div>
+
+      <div style="margin-top:16px;padding:14px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);line-height:1.7">
+        <b style="color:var(--text);display:block;margin-bottom:6px">Expected savings with H.265</b>
+        1080p 1min video: ~200MB → ~40MB<br>
+        720p 1min video: ~100MB → ~20MB<br>
+        Quality difference: barely noticeable
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COLAB TAB ══ -->
+<div id="tab-colab" class="section main">
+  <div class="colab-section">
+    <div class="colab-title">Google Colab notebooks</div>
+    <div class="colab-sub">Download and run these in Colab to process your videos with GPU acceleration</div>
+    <div class="colab-cards">
+      <div class="colab-card">
+        <div class="tag filters">Cinematic filters</div>
+        <h3>Video effects notebook</h3>
+        <p>Apply all 7 cinematic presets to your videos. Upload a ZIP, pick a preset (or all combined), download results. Uses FFmpeg with hardware acceleration.</p>
+        <div class="code-block">
+<span class="comment"># Cell 1 — Install</span>
+<span class="cmd">!apt-get install -y ffmpeg</span>
+
+<span class="comment"># Cell 2 — Upload ZIP</span>
+<span class="cmd">from google.colab import files
+uploaded = files.upload()</span>
+
+<span class="comment"># Cell 3 — Apply effect (change EFFECT)</span>
+<span class="cmd">EFFECT = 7  # 1-7
+# ... runs FFmpeg on all videos</span>
+        </div>
+        <button class="btn accent" onclick="downloadFilterNotebook()">Download notebook</button>
+      </div>
+      <div class="colab-card">
+        <div class="tag compress">Compression</div>
+        <h3>Batch compressor notebook</h3>
+        <p>Compress a ZIP full of videos using H.265. Typical 40–70% size reduction while keeping quality high. Downloads a ZIP of all compressed videos.</p>
+        <div class="code-block">
+<span class="comment"># Upload ZIP → compress all → download ZIP</span>
+<span class="cmd">CODEC = 'libx265'   # H.265
+CRF = 23            # quality
+PRESET = 'slow'     # encoding speed</span>
+
+<span class="comment"># Saves ~60% file size typically</span>
+<span class="cmd">!ffmpeg -i input.mp4 -c:v libx265 \
+  -crf 23 -preset slow output.mp4</span>
+        </div>
+        <button class="btn accent" onclick="downloadCompressNotebook()">Download notebook</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ STATE ═══
+let filterFiles = [];
+let compressFiles = [];
+let activePresetIdx = 6;
+let grainAnimId = null;
+let videoEl = document.getElementById('preview-video');
+let compressSettings = { quality: '23', codec: 'libx265', res: '', encPreset: 'slow', audio: 'copy' };
+
+// ═══ TABS ═══
+function switchTab(t) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══ TOAST ═══
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+// ═══ PRESETS ═══
+const PRESETS = [
+  {name:'Dreamy glow',   vibe:'Soft + warm',      v:{brightness:115,contrast:95, saturation:115,sepia:15,blur:1.5,vignette:30,hue:5, grain:5, fade:5, speed:100}},
+  {name:'Shutter blur',  vibe:'Motion feel',       v:{brightness:105,contrast:110,saturation:110,sepia:0, blur:0.8,vignette:20,hue:0, grain:0, fade:0, speed:100}},
+  {name:'Film grain',    vibe:'Vintage 8mm',       v:{brightness:95, contrast:90, saturation:70, sepia:40,blur:0.5,vignette:60,hue:-5,grain:70,fade:20,speed:100}},
+  {name:'Golden hour',   vibe:'Warm sunset',       v:{brightness:108,contrast:105,saturation:130,sepia:30,blur:0,  vignette:25,hue:8, grain:10,fade:8, speed:100}},
+  {name:'Cinematic',     vibe:'Widescreen grade',  v:{brightness:95, contrast:115,saturation:85, sepia:10,blur:0,  vignette:45,hue:-3,grain:20,fade:15,speed:100}},
+  {name:'Slow dream',    vibe:'Slowed + hazy',     v:{brightness:110,contrast:90, saturation:105,sepia:10,blur:2,  vignette:40,hue:3, grain:15,fade:10,speed:50}},
+  {name:'All combined',  vibe:'Full memory look',  v:{brightness:107,contrast:108,saturation:118,sepia:22,blur:1,  vignette:38,hue:5, grain:25,fade:10,speed:80}},
+  {name:'Muted lux',     vibe:'Desaturated luxury',v:{brightness:100,contrast:112,saturation:60, sepia:5, blur:0,  vignette:50,hue:-8,grain:30,fade:25,speed:100}},
+];
+
+function buildPresets() {
+  const g = document.getElementById('preset-grid');
+  g.style.gridTemplateColumns = 'repeat(4,1fr)';
+  g.innerHTML = PRESETS.map((p,i) => `
+    <button class="preset-card${i===activePresetIdx?' active':''}" onclick="applyPreset(${i})">
+      <span class="pname">${p.name}</span>
+      <span class="pvibe">${p.vibe}</span>
+    </button>`).join('');
+}
+
+function applyPreset(i) {
+  activePresetIdx = i;
+  const v = PRESETS[i].v;
+  Object.keys(v).forEach(k => {
+    const el = document.getElementById('s-' + k);
+    if(el) el.value = v[k];
+  });
+  document.querySelectorAll('.preset-card').forEach((c,j) => c.classList.toggle('active', j===i));
+  updateAllDisplays();
+}
+
+// ═══ SLIDERS ═══
+const SLIDERS = [
+  {id:'brightness', unit:'%'},  {id:'contrast',   unit:'%'},
+  {id:'saturation', unit:'%'},  {id:'sepia',       unit:'%'},
+  {id:'blur',       unit:'px'}, {id:'vignette',    unit:'%'},
+  {id:'hue',        unit:'°'},  {id:'grain',       unit:'%'},
+  {id:'fade',       unit:'%'},  {id:'speed',       unit:'×', fn: v => (v/100).toFixed(1)},
+];
+
+function getVal(id) { return parseFloat(document.getElementById('s-'+id)?.value||0); }
+
+function updateAllDisplays() {
+  SLIDERS.forEach(s => {
+    const raw = getVal(s.id);
+    const disp = s.fn ? s.fn(raw) : raw;
+    const el = document.getElementById('v-'+s.id);
+    if(el) el.textContent = disp + s.unit;
+  });
+  applyVideoFilter();
+  document.getElementById('ffmpeg-output').style.display = 'none';
+}
+
+function applyVideoFilter() {
+  if(!videoEl.src) return;
+  const b=getVal('brightness'), co=getVal('contrast'), sa=getVal('saturation'),
+        se=getVal('sepia'), bl=getVal('blur'), h=getVal('hue'), fa=getVal('fade');
+  const bright = b/100 + (fa/100)*0.15;
+  videoEl.style.filter = `brightness(${bright}) contrast(${co/100}) saturate(${sa/100}) sepia(${se/100}) blur(${bl}px) hue-rotate(${h}deg)`;
+  document.getElementById('vignette-overlay').style.opacity = getVal('vignette')/100;
+  document.getElementById('grain-canvas').style.opacity = getVal('grain')/130;
+  const sp = getVal('speed')/100;
+  videoEl.playbackRate = Math.max(0.1, Math.min(sp, 16));
+}
+
+SLIDERS.forEach(s => {
+  const el = document.getElementById('s-'+s.id);
+  if(el) el.addEventListener('input', () => {
+    document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+    activePresetIdx = -1;
+    updateAllDisplays();
+  });
+});
+
+function resetFilters() {
+  document.getElementById('s-brightness').value=100;
+  document.getElementById('s-contrast').value=100;
+  document.getElementById('s-saturation').value=100;
+  document.getElementById('s-sepia').value=0;
+  document.getElementById('s-blur').value=0;
+  document.getElementById('s-vignette').value=0;
+  document.getElementById('s-hue').value=0;
+  document.getElementById('s-grain').value=0;
+  document.getElementById('s-fade').value=0;
+  document.getElementById('s-speed').value=100;
+  document.querySelectorAll('.preset-card').forEach(c=>c.classList.remove('active'));
+  activePresetIdx=-1;
+  updateAllDisplays();
+}
+
+// ═══ GRAIN ANIMATION ═══
+function startGrain() {
+  const canvas = document.getElementById('grain-canvas');
+  canvas.width = 200; canvas.height = 113;
+  function frame() {
+    const ctx = canvas.getContext('2d');
+    const id = ctx.createImageData(200,113);
+    for(let i=0;i<id.data.length;i+=4){
+      const v=Math.random()*255;
+      id.data[i]=id.data[i+1]=id.data[i+2]=v; id.data[i+3]=255;
+    }
+    ctx.putImageData(id,0,0);
+    grainAnimId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// ═══ FILE HANDLING — FILTERS ═══
+function setupFilterDrop() {
+  const drop = document.getElementById('filter-drop');
+  const input = document.getElementById('filter-file-input');
+  
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('dragover');
+    addFilterFiles([...e.dataTransfer.files]);
+  });
+  input.addEventListener('change', () => addFilterFiles([...input.files]));
+}
+
+function addFilterFiles(files) {
+  files.forEach(f => {
+    if(!f.type.startsWith('video/')) return;
+    if(filterFiles.find(x=>x.name===f.name&&x.size===f.size)) return;
+    filterFiles.push(f);
+  });
+  renderFilterList();
+  if(filterFiles.length) {
+    document.getElementById('filter-workspace').style.display='grid';
+    if(!videoEl.src) loadFilterPreview(filterFiles[0]);
+  }
+  const btn = document.getElementById('apply-all-btn');
+  if(btn) btn.style.display = filterFiles.length>1 ? 'block' : 'none';
+}
+
+function renderFilterList() {
+  const list = document.getElementById('filter-file-list');
+  list.innerHTML = filterFiles.map((f,i) => `
+    <div class="file-item" onclick="loadFilterPreview(filterFiles[${i}])" style="cursor:pointer">
+      <div class="file-thumb-placeholder">🎥</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${(f.size/1024/1024).toFixed(1)} MB · ${f.type.split('/')[1]?.toUpperCase()}</div>
+      </div>
+      <button class="file-remove" onclick="removeFilterFile(${i},event)">×</button>
+    </div>`).join('');
+}
+
+function removeFilterFile(i, e) {
+  e.stopPropagation();
+  filterFiles.splice(i,1);
+  renderFilterList();
+  if(!filterFiles.length) {
+    document.getElementById('filter-workspace').style.display='none';
+    videoEl.src='';
+    document.getElementById('preview-empty').style.display='flex';
+  }
+  const btn = document.getElementById('apply-all-btn');
+  if(btn) btn.style.display = filterFiles.length>1 ? 'block' : 'none';
+}
+
+function loadFilterPreview(file) {
+  const url = URL.createObjectURL(file);
+  videoEl.src = url;
+  videoEl.play();
+  document.getElementById('preview-empty').style.display='none';
+  document.getElementById('preview-file-name').textContent = file.name;
+  applyVideoFilter();
+  startGrain();
+}
+
+// ═══ FFMPEG COMMAND ═══
+function buildFFmpegFilter() {
+  const b=getVal('brightness'), co=getVal('contrast'), sa=getVal('saturation'),
+        se=getVal('sepia'), bl=getVal('blur'), vi=getVal('vignette'),
+        h=getVal('hue'), gr=getVal('grain'), fa=getVal('fade'), sp=getVal('speed')/100;
+  
+  let parts = [];
+  if(sp!==1) parts.push(`setpts=${(1/sp).toFixed(3)}*PTS`);
+  
+  let eqParts = [];
+  const br = (b/100-1+fa/100*0.15+1);
+  eqParts.push(`brightness=${(br-1).toFixed(3)}`);
+  eqParts.push(`contrast=${(co/100).toFixed(3)}`);
+  eqParts.push(`saturation=${(sa/100).toFixed(3)}`);
+  parts.push('eq='+eqParts.join(':'));
+  
+  if(se>0) {
+    const s=se/100;
+    parts.push(`colorchannelmixer=${(1-s*0.7).toFixed(2)}:${(s*0.35).toFixed(2)}:${(s*0.15).toFixed(2)}:0:${(s*0.3).toFixed(2)}:${(1-s*0.4).toFixed(2)}:${(s*0.2).toFixed(2)}:0:${(s*0.1).toFixed(2)}:${(s*0.15).toFixed(2)}:${(1-s*0.9).toFixed(2)}`);
+  }
+  if(bl>0) parts.push(`gblur=sigma=${parseFloat(bl).toFixed(1)}`);
+  if(vi>0) parts.push(`vignette=PI/${Math.max(2.5,(7-vi/15)).toFixed(1)}`);
+  if(h!==0) parts.push(`hue=h=${h}`);
+  if(gr>0) parts.push(`noise=alls=${Math.round(gr/4)}:allf=t+u`);
+  if(fa>0) parts.push(`curves=r='0/${(fa/100*0.08).toFixed(3)} 1/1':g='0/${(fa/100*0.08).toFixed(3)} 1/1':b='0/${(fa/100*0.08).toFixed(3)} 1/1'`);
+  
+  return parts.join(',');
+}
+
+function generateAndDownload() {
+  if(!filterFiles.length){ toast('Upload a video first','error'); return; }
+  const vf = buildFFmpegFilter();
+  const sp = getVal('speed')/100;
+  const af = sp<1 ? (sp>=0.5?`atempo=${sp.toFixed(2)}`:`atempo=0.5,atempo=${(sp*2).toFixed(2)}`) : 
+             sp>1 ? `atempo=${Math.min(sp,2).toFixed(2)}` : 'copy';
+  
+  const preset = activePresetIdx>=0 ? PRESETS[activePresetIdx].name.replace(/\s+/g,'_') : 'custom';
+  const cmd = `ffmpeg -i "input.mp4" -vf "${vf}" -af "${af}" -c:v libx264 -crf 18 -preset slow -movflags +faststart "output_${preset}.mp4"`;
+  
+  document.getElementById('ffmpeg-text').textContent = cmd;
+  document.getElementById('ffmpeg-output').style.display = 'block';
+  toast('FFmpeg command ready!');
+}
+
+function copyFFmpeg() {
+  navigator.clipboard.writeText(document.getElementById('ffmpeg-text').textContent);
+  toast('Copied to clipboard!', 'success');
+}
+
+function applyToAll() {
+  if(filterFiles.length<2){ toast('Need multiple files'); return; }
+  const vf = buildFFmpegFilter();
+  const sp = getVal('speed')/100;
+  const af = sp<1 ? (sp>=0.5?`atempo=${sp.toFixed(2)}`:`atempo=0.5,atempo=${(sp*2).toFixed(2)}`) : 
+             sp>1 ? `atempo=${Math.min(sp,2).toFixed(2)}` : 'copy';
+  const preset = activePresetIdx>=0 ? PRESETS[activePresetIdx].name.replace(/\s+/g,'_') : 'custom';
+  
+  const cmds = filterFiles.map((f,i) =>
+    `ffmpeg -i "${f.name}" -vf "${vf}" -af "${af}" -c:v libx264 -crf 18 -preset slow "output_${i+1}_${preset}.mp4"`
+  ).join('\n\n');
+  
+  document.getElementById('ffmpeg-text').textContent = cmds;
+  document.getElementById('ffmpeg-output').style.display = 'block';
+  toast(`Commands for ${filterFiles.length} files ready!`,'success');
+}
+
+// ═══ FILE HANDLING — COMPRESS ═══
+function setupCompressDrop() {
+  const drop = document.getElementById('compress-drop');
+  const input = document.getElementById('compress-file-input');
+  
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('dragover');
+    addCompressFiles([...e.dataTransfer.files]);
+  });
+  input.addEventListener('change', () => addCompressFiles([...input.files]));
+}
+
+function addCompressFiles(files) {
+  files.forEach(f => {
+    if(!f.type.startsWith('video/')) return;
+    if(compressFiles.find(x=>x.name===f.name&&x.size===f.size)) return;
+    compressFiles.push(f);
+  });
+  renderCompressList();
+  updateCompressStats();
+}
+
+function renderCompressList() {
+  const list = document.getElementById('compress-file-list');
+  list.innerHTML = compressFiles.map((f,i) => `
+    <div class="file-item">
+      <div class="file-thumb-placeholder">📦</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${(f.size/1024/1024).toFixed(1)} MB · ${f.type.split('/')[1]?.toUpperCase()}</div>
+      </div>
+      <button class="file-remove" onclick="removeCompressFile(${i})">×</button>
+    </div>`).join('');
+}
+
+function removeCompressFile(i) {
+  compressFiles.splice(i,1);
+  renderCompressList();
+  updateCompressStats();
+}
+
+function updateCompressStats() {
+  const totalMB = compressFiles.reduce((s,f)=>s+f.size/1024/1024,0);
+  const savings = compressSettings.codec==='libx265' ? 65 : 45;
+  document.getElementById('st-files').textContent = compressFiles.length;
+  document.getElementById('st-size').textContent = totalMB.toFixed(0)+' MB';
+  document.getElementById('st-savings').textContent = '~'+savings+'%';
+}
+
+function setQuality(btn,q) {
+  document.querySelectorAll('[data-q]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); compressSettings.quality=q;
+}
+function setCodec(btn,c) {
+  document.querySelectorAll('[data-c]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); compressSettings.codec=c; updateCompressStats();
+}
+function setRes(btn,r) {
+  document.querySelectorAll('[data-r]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); compressSettings.res=r;
+}
+function setPreset(btn,p) {
+  document.querySelectorAll('.compress-card .pill').forEach(b=>{
+    if(['ultrafast','fast','slow','veryslow'].includes(b.textContent.split(' ')[0])) b.classList.remove('active');
+  });
+  btn.classList.add('active'); compressSettings.encPreset=p;
+}
+function setAudio(btn,a) {
+  document.querySelectorAll('[onclick*="setAudio"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); compressSettings.audio=a;
+}
+
+function generateCompressCmd() {
+  if(!compressFiles.length){ toast('Upload videos first','error'); return; }
+  const {quality,codec,res,encPreset,audio}=compressSettings;
+  const af = audio==='copy' ? '-c:a copy' : `-c:a aac -b:a ${audio}`;
+  const vfScale = res ? `scale=${res}:flags=lanczos,` : '';
+  
+  const cmds = compressFiles.map((f,i) => {
+    const out = f.name.replace(/\.[^/.]+$/,'')+'_compressed.mp4';
+    return `# File ${i+1}: ${f.name}\nffmpeg -i "${f.name}" -vf "${vfScale}setsar=1" -c:v ${codec} -crf ${quality} -preset ${encPreset} ${af} -movflags +faststart -y "${out}"`;
+  }).join('\n\n');
+  
+  document.getElementById('compress-cmd-text').textContent = cmds;
+  document.getElementById('compress-cmd-output').style.display = 'block';
+  toast(`Commands for ${compressFiles.length} file(s) ready!`,'success');
+}
+
+function copyCompressCmd() {
+  navigator.clipboard.writeText(document.getElementById('compress-cmd-text').textContent);
+  toast('Copied!','success');
+}
+
+// ═══ NOTEBOOK DOWNLOADS ═══
+function downloadFilterNotebook() {
+  const nb = {
+    nbformat:4, nbformat_minor:0,
+    metadata:{colab:{provenance:[],name:'College Memories — Cinematic Filters'},kernelspec:{name:'python3',display_name:'Python 3'}},
+    cells:[
+      {cell_type:'markdown',metadata:{},source:['# 🎓 College Memories — Cinematic Video Filters\n\nRun cells in order: 1 → 2 → 3 → 4']},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["!apt-get install -y ffmpeg > /dev/null 2>&1\nprint('✅ FFmpeg ready!')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["from google.colab import files\nimport zipfile, os\nfrom pathlib import Path\n\nprint('Upload your ZIP or video files...')\nuploaded = files.upload()\n\nvideo_exts = {'.mp4','.mov','.avi','.mkv','.webm'}\ninput_videos = []\nPath('input').mkdir(exist_ok=True)\n\nfor fname in uploaded:\n    if fname.endswith('.zip'):\n        with zipfile.ZipFile(fname,'r') as z: z.extractall('input')\n        for f in Path('input').rglob('*'):\n            if f.suffix.lower() in video_exts: input_videos.append(f)\n    elif Path(fname).suffix.lower() in video_exts:\n        import shutil; shutil.copy(fname,'input/'+fname)\n        input_videos.append(Path('input/'+fname))\n\nprint(f'Found {len(input_videos)} video(s)')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["import subprocess\n\n# 🎛️ Change EFFECT number: 1-8\nEFFECT = 7\nSLOWMO = 0.5  # for effect 6 only\n\neffects = {\n 1:('Dreamy Glow','eq=brightness=0.15:contrast=0.95:saturation=1.15,split=2[b][l];[l]gblur=sigma=8[g];[b][g]blend=all_mode=screen:all_opacity=0.3,sepia=0.15,vignette=PI/5'),\n 2:('Shutter Blur','tmix=frames=5:weights=\"1 2 3 2 1\",eq=contrast=1.1:saturation=1.1'),\n 3:('Film Grain','noise=alls=18:allf=t+u,vignette=PI/4,eq=saturation=0.7:contrast=0.9,curves=r=\"0/0 1/0.95\"'),\n 4:('Golden Hour','eq=brightness=0.08:saturation=1.3,colorbalance=rs=0.2:gs=0.05:bs=-0.15,vignette=PI/5'),\n 5:('Cinematic','eq=contrast=1.15:saturation=0.85:brightness=-0.05,vignette=PI/3.5,noise=alls=8:allf=t+u'),\n 6:(f'Slow Dream',f'setpts={1/SLOWMO:.2f}*PTS,gblur=sigma=5,eq=brightness=0.1:saturation=1.05,vignette=PI/4'),\n 7:('All Combined','tmix=frames=3:weights=\"1 2 1\",split=2[b][l];[l]gblur=sigma=6[g];[b][g]blend=all_mode=screen:all_opacity=0.25[gl];[gl]colorbalance=rs=0.15:gs=0.03:bs=-0.12,noise=alls=10:allf=t+u,vignette=PI/5,eq=brightness=0.07:saturation=1.15:contrast=1.08,curves=r=\"0/0.04 1/0.97\":g=\"0/0.04 1/0.93\":b=\"0/0.04 1/0.85\",pad=iw:ih+iw*0.12:0:iw*0.06:black'),\n 8:('Muted Lux','eq=contrast=1.12:saturation=0.6:brightness=0,vignette=PI/3,noise=alls=12:allf=t+u,curves=r=\"0/0.05 1/0.95\":g=\"0/0.05 1/0.95\":b=\"0/0.05 1/0.95\"'),\n}\n\nname, vf = effects[EFFECT]\nPath('output').mkdir(exist_ok=True)\n\nfor i, v in enumerate(input_videos):\n    out = Path('output') / (v.stem + f'_{name.replace(\" \",\"_\")}.mp4')\n    print(f'[{i+1}/{len(input_videos)}] {v.name}...')\n    cmd = ['ffmpeg','-i',str(v),'-vf',vf,'-c:v','libx264','-crf','18','-preset','slow','-movflags','+faststart','-y',str(out)]\n    r = subprocess.run(cmd, capture_output=True)\n    if out.exists(): print(f'   ✅ {out.stat().st_size/1024/1024:.1f} MB')\n    else: print(f'   ❌ {r.stderr[-200:].decode()}')\n\nprint('Done!')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["from google.colab import files\nimport zipfile\n\noutputs = list(Path('output').glob('*.mp4'))\nif len(outputs)==1:\n    files.download(str(outputs[0]))\nelse:\n    with zipfile.ZipFile('cinematic_videos.zip','w') as z:\n        for f in outputs: z.write(f,f.name)\n    files.download('cinematic_videos.zip')\nprint('✅ Downloaded!')"]}
+    ]
+  };
+  const blob = new Blob([JSON.stringify(nb,null,1)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'college_memories_filters.ipynb';
+  a.click();
+  toast('Notebook downloaded!','success');
+}
+
+function downloadCompressNotebook() {
+  const nb = {
+    nbformat:4, nbformat_minor:0,
+    metadata:{colab:{provenance:[],name:'Video Compressor — High Quality'},kernelspec:{name:'python3',display_name:'Python 3'}},
+    cells:[
+      {cell_type:'markdown',metadata:{},source:['# 📦 Video Compressor — High Quality\n\nH.265 compression. Run cells 1 → 2 → 3 → 4']},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["!apt-get install -y ffmpeg > /dev/null\nprint('✅ Ready!')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["from google.colab import files\nimport zipfile\nfrom pathlib import Path\n\nCRF = 23         # 18=near lossless, 23=great, 28=smaller\nCODEC = 'libx265'\nPRESET = 'slow'\nAUDIO = 'copy'\n\nprint('Upload ZIP or videos...')\nuploaded = files.upload()\nPath('input').mkdir(exist_ok=True)\n\nexts={'.mp4','.mov','.avi','.mkv','.webm'}\nvids=[]\nfor f in uploaded:\n    if f.endswith('.zip'):\n        with zipfile.ZipFile(f) as z: z.extractall('input')\n        vids+=[x for x in Path('input').rglob('*') if x.suffix.lower() in exts]\n    elif Path(f).suffix.lower() in exts:\n        import shutil; shutil.copy(f,'input/'+f); vids.append(Path('input/'+f))\nprint(f'{len(vids)} video(s) ready')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["import subprocess\nPath('output').mkdir(exist_ok=True)\n\nfor i,v in enumerate(vids):\n    out = Path('output')/(v.stem+'_compressed.mp4')\n    print(f'[{i+1}/{len(vids)}] {v.name} ({v.stat().st_size/1024/1024:.1f}MB)...')\n    af_args = ['-c:a','copy'] if AUDIO=='copy' else ['-c:a','aac','-b:a',AUDIO]\n    cmd=['ffmpeg','-i',str(v),'-c:v',CODEC,'-crf',str(CRF),'-preset',PRESET]+af_args+['-movflags','+faststart','-y',str(out)]\n    r=subprocess.run(cmd,capture_output=True)\n    if out.exists():\n        orig=v.stat().st_size/1024/1024; comp=out.stat().st_size/1024/1024\n        print(f'   ✅ {orig:.1f}MB → {comp:.1f}MB ({(1-comp/orig)*100:.0f}% saved)')\n    else: print(f'   ❌ Failed')"]},
+      {cell_type:'code',metadata:{},outputs:[],execution_count:null,source:["from google.colab import files\nimport zipfile\n\nouts=list(Path('output').glob('*.mp4'))\nif len(outs)==1:\n    files.download(str(outs[0]))\nelse:\n    with zipfile.ZipFile('compressed.zip','w') as z:\n        [z.write(f,f.name) for f in outs]\n    files.download('compressed.zip')\nprint('✅ Done!')"]}
+    ]
+  };
+  const blob = new Blob([JSON.stringify(nb,null,1)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'video_compressor.ipynb';
+  a.click();
+  toast('Notebook downloaded!','success');
+}
+
+// ═══ INIT ═══
+buildPresets();
+setupFilterDrop();
+setupCompressDrop();
+applyPreset(6);
+startGrain();
+</script>
+</body>
+</html>
